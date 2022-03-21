@@ -51,31 +51,13 @@ import {
   MenuOption,
 } from "naive-ui";
 
-import {
-  Create as CreateIcon,
-  People as PeopleIcon,
-  Apps as AppIcon,
-} from "@vicons/ionicons5";
+import { People as PeopleIcon, Apps as AppIcon } from "@vicons/ionicons5";
 
 function renderIcon(icon: Component) {
   return () => h(NIcon, null, { default: () => h(icon) });
 }
 
 const menuOptions: MenuOption[] = [
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            path: "car",
-          },
-        },
-        { default: () => "车辆信息管理" }
-      ),
-    key: "go-to-car",
-    icon: renderIcon(CreateIcon),
-  },
   {
     label: () =>
       h(
