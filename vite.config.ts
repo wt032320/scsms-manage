@@ -8,7 +8,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: '@import "@/assets/style/mian.scss";',
+        additionalData: '@import "@/assets/style/main.scss";',
       },
     },
   },
@@ -20,7 +20,6 @@ export default defineConfig({
   },
   //启动服务配置
   server: {
-    host: "192.168.0.1",
     port: 8000,
     open: true,
     https: false,

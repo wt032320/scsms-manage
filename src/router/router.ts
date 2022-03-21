@@ -4,7 +4,25 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     name: "Login",
-    component: () => import("@/pages/login/Login.vue"), // 注意这里要带上 文件后缀.vue
+    component: () => import("@/views/ManageLogin.vue"),
+  },
+  {
+    path: "/home",
+    name: "Home",
+    redirect: "/home/order",
+    component: () => import("@/views/ManageHome.vue"),
+    children: [
+      {
+        path: "order",
+        name: "Order",
+        component: () => import("@/views/OrderManage.vue"),
+      },
+      {
+        path: "people",
+        name: "People",
+        component: () => import("@/views/PeopleManage.vue"),
+      },
+    ],
   },
 ];
 
