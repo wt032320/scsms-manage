@@ -58,7 +58,7 @@ module.exports = {
     "default-case": "warn",
     // 强制尽可能地使用点号
     "dot-notation": "warn",
-    "endOfLine": "auto",
+    endOfLine: "auto",
     // 要求使用 === 和 !==
     eqeqeq: "warn",
     // 禁止 if 语句中 return 语句之后有 else 块
@@ -137,6 +137,7 @@ module.exports = {
     "switch-colon-spacing": "warn",
     // 强制箭头函数的箭头前后使用一致的空格
     "arrow-spacing": "warn",
+    // eslint-disable-next-line no-dupe-keys
     "no-var": "warn",
     "prefer-const": "warn",
     "prefer-rest-params": "warn",

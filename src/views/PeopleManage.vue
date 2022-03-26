@@ -1,15 +1,20 @@
 <template>
   <n-data-table
+    ref="table"
+    :remote="true"
     :columns="columns"
     :data="data"
+    :loading="loading"
     :pagination="pagination"
+    :row-key="rowKey"
     :bordered="true"
     :single-line="false"
-    align="center"
+    @update:page="handlePageChange"
   />
 </template>
 <script lang="ts">
-import { h, defineComponent } from "vue";
+import { h, defineComponent, ref, reactive, onMounted } from "vue";
+import { usersInfo } from "../data/index";
 import { NButton, useMessage, DataTableColumns, NDataTable } from "naive-ui";
 type DataTableSortState = {
   align: "center";
@@ -17,104 +22,142 @@ type DataTableSortState = {
 type Song = {
   id: number;
   username: string;
-  password: string;
+  gender: string;
   phonenum: string;
   email: string;
-  gender: string;
+  time: string;
 };
 
 const createColumns = ({
-  play,
+  Delete,
 }: {
-  play: (row: Song) => void;
+  Delete: (row: Song) => void;
 }): DataTableColumns<Song> => {
   return [
     {
       title: "Id",
       key: "id",
+      align: "center",
     },
     {
       title: "Username",
       key: "username",
-    },
-    {
-      title: "Password",
-      key: "password",
-    },
-    {
-      title: "Phonenum",
-      key: "phonenum",
-    },
-    {
-      title: "Email",
-      key: "email",
+      align: "center",
     },
     {
       title: "Gender",
       key: "gender",
+      align: "center",
+    },
+    {
+      title: "Phonenum",
+      key: "phonenum",
+      align: "center",
+    },
+    {
+      title: "Email",
+      key: "email",
+      align: "center",
+    },
+    {
+      title: "Time",
+      key: "time",
+      align: "center",
     },
     {
       title: "Action",
       key: "actions",
+      align: "center",
       render(row) {
         return h(
           NButton,
           {
             strong: true,
-            tertiary: true,
             size: "small",
-            onClick: () => play(row),
+            type: "error",
+            onClick: () => Delete(row),
           },
-          { default: () => "Play" }
+          { default: () => "Delete" }
         );
       },
     },
   ];
 };
 
-const data: Song[] = [
-  {
-    id: 3,
-    username: "zhangsan",
-    password: "000",
-    phonenum: "123456",
-    email: "xx@163.com",
-    gender: "man",
-  },
-  {
-    id: 4,
-    username: "lisi",
-    password: "111",
-    phonenum: "147258",
-    email: "yy@163.com",
-    gender: "woman",
-  },
-  {
-    id: 12,
-    username: "wangwu",
-    password: "888",
-    phonenum: "169875",
-    email: "zz@163.com",
-    gender: "man",
-  },
-];
+function query(page: number, pageSize = 10) {
+  return new Promise((resolve) => {
+    const pagedData = usersInfo.slice((page - 1) * pageSize, page * pageSize);
+    const pageCount = Math.ceil(usersInfo.length / pageSize);
+    resolve({
+      pageCount,
+      data: pagedData,
+    });
+  });
+}
 
 export default defineComponent({
-  name: "OrderManage",
+  name: "PeopleManage",
   components: {
     NDataTable,
   },
   setup() {
     const message = useMessage();
+    const dataRef = ref([]);
+    const loadingRef = ref(true);
+    const columnsRef = ref(createColumns);
+    const paginationReactive = reactive({
+      page: 1,
+      pageCount: 1,
+      pageSize: 10,
+    });
+
+    onMounted(() => {
+      query(paginationReactive.page, paginationReactive.pageSize).then(
+        (data: any) => {
+          console.log(data);
+          dataRef.value = data.data;
+          paginationReactive.pageCount = data.pageCount;
+          loadingRef.value = false;
+        }
+      );
+    });
+
+    function handlePageChange(currentPage) {
+      if (!loadingRef.value) {
+        loadingRef.value = true;
+        query(currentPage, paginationReactive.pageSize).then((data: any) => {
+          dataRef.value = data.data;
+          paginationReactive.page = currentPage;
+          paginationReactive.pageCount = data.pageCount;
+          loadingRef.value = false;
+        });
+      }
+    }
+
+    function rowKey(rowData) {
+      return rowData.columns;
+    }
 
     return {
-      data,
-      columns: createColumns({
-        play(row: Song) {
-          message.info(`Play ${row.username}`);
+      data: dataRef,
+      rowKey,
+      columns: columnsRef.value({
+        Delete(row: Song) {
+          message.info(`Delete ${row.id}`);
         },
       }),
-      pagination: false as const,
+      pagination: paginationReactive,
+      loading: loadingRef,
+      handlePageChange,
+      /*       rowKey(rowData) {
+        return rowData.columns;
+      }, */
+      /*       columns: createColumns({
+        Delete(row: Song) {
+          message.info(`Delete ${row.username}`);
+        },
+      }),
+      pagination: false as const, */
     };
   },
 });
