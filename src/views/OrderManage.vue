@@ -15,9 +15,11 @@
 </template>
 
 <script lang="ts">
-import { DataTableColumn, NButton, NDataTable, useMessage } from "naive-ui";
+import { NButton, NDataTable, useMessage } from "naive-ui";
 import { defineComponent, h, onMounted, reactive, ref } from "vue";
+import { getOrder } from "../apis/order";
 import { ordersInfo } from "../data";
+import { OrderItem } from "../types/types";
 
 const columns = ({ handleAgree, handleReject }: any): any => {
   return [
@@ -49,11 +51,6 @@ const columns = ({ handleAgree, handleReject }: any): any => {
     {
       title: "燃料类型",
       key: "fuel",
-      align: "center",
-    },
-    {
-      title: "车身结构",
-      key: "structure",
       align: "center",
     },
     {
@@ -101,14 +98,16 @@ export default defineComponent({
   components: { NDataTable },
   setup() {
     const message = useMessage();
-    const dataRef = ref([]);
+    const dataRef = ref<any>([]);
     const loadingRef = ref(true);
-    // const columnsRef = ref(columns);
     const paginationReactive = reactive({
       page: 1,
       pageCount: 1,
       pageSize: 10,
     });
+
+    const allInfo: OrderItem[] = [];
+
     const query = (page: number, pageSize = 10): Promise<any> => {
       return new Promise((resolve) => {
         const pagedData = ordersInfo.slice(
@@ -135,13 +134,25 @@ export default defineComponent({
       }
     };
     onMounted(() => {
-      query(paginationReactive.page, paginationReactive.pageSize).then(
-        (data: any) => {
-          dataRef.value = data.data;
-          paginationReactive.pageCount = data.pageCount;
-          loadingRef.value = false;
-        }
-      );
+      getOrder({
+        page: paginationReactive.page,
+        size: paginationReactive.pageSize,
+      }).then((data: any) => {
+        data.data.list.map((item: any) => {
+          const orderItem: any = {};
+          orderItem.id = item.id;
+          orderItem.brand = item.car.brand;
+          orderItem.model = item.car.model;
+          orderItem.series = item.car.series;
+          orderItem.structure = item.car.structure;
+          orderItem.fuel = item.car.fuel;
+          orderItem.price = item.car.price;
+          allInfo.push(orderItem);
+        });
+        dataRef.value = allInfo;
+        paginationReactive.pageCount = data.pageNum;
+        loadingRef.value = false;
+      });
     });
 
     return {
