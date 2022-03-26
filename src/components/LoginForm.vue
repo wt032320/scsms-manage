@@ -34,14 +34,9 @@ import { reactive, ref, toRefs, watch } from "vue";
 
 import { NInput, NForm, NFormItem, NButton, useMessage } from "naive-ui";
 
-import router from "../router/router";
-
-// import { login } from "../../services/login";
-
-interface ModelType {
-  username: string | null;
-  password: string | null;
-}
+import { login } from "../apis/auth";
+import { LoginInfo } from "../types/types";
+import { useRouter } from "vue-router";
 
 export default {
   name: "LoginForm",
@@ -53,30 +48,29 @@ export default {
   },
 
   setup() {
-    const userInfo = ref<ModelType>({
-      username: "",
-      password: "",
+    const userInfo = ref<LoginInfo>({
+      username: "zhangsan",
+      password: "zhangsan123",
     });
 
     const isDisabled = ref(true);
 
+    const router = useRouter();
+
     const message = useMessage();
 
     const messageSubmit = (): void => {
-      const data: ModelType = {
+      const data: LoginInfo = {
         username: userInfo.value.username,
         password: userInfo.value.password,
       };
-      router.push({ path: "/home" });
-      // login(data).then((res) => {
-      //   console.log(res);
-      //   if (res.token) {
-      //     localStorage.setItem("token", res.token);
-      //     router.push({ path: "/managehome" });
-      //   } else if (res.msg) {
-      //     message.error(res.msg, { duration: 2000 });
-      //   }
-      // });
+      login(data).then((res) => {
+        if (res.status === 0) {
+          router.push({ path: "/home" });
+        } else if (res.status === 1) {
+          message.error(res.msg, { duration: 2000 });
+        }
+      });
     };
 
     watch(
@@ -96,7 +90,7 @@ export default {
             if (!value) {
               return new Error("需要填写用户名");
             } else if (!/^[a-zA-Z0-9_-]{4,16}$/.test(value)) {
-              return new Error("4到16位（字母，数字，下划线，减号");
+              return new Error("4到16位(字母，数字，下划线，减号)");
             }
             return true;
           },
