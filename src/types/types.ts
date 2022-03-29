@@ -31,4 +31,9 @@ interface PeopleItem {
   gender: string;
 }
 
-export { LoginInfo, OrderList, OrderItem, PeopleList, PeopleItem };
+interface AuditInfo {
+  saleId: string;
+  publish: string;
+}
+
+export { LoginInfo, OrderList, OrderItem, PeopleList, PeopleItem, AuditInfo };

@@ -7,6 +7,9 @@
     striped
     :single-line="false"
     size="large"
+    min-height="75vh"
+    :flex-height="true"
+    :bordered="true"
     :loading="loading"
     :pagination="pagination"
     :row-key="rowKey"
@@ -16,10 +19,19 @@
 
 <script lang="ts">
 import { NButton, NDataTable, useMessage } from "naive-ui";
-import { defineComponent, h, onMounted, reactive, ref } from "vue";
-import { getOrder } from "../apis/order";
-import { ordersInfo } from "../data";
-import { OrderItem } from "../types/types";
+import { warnOnce } from "naive-ui/lib/_utils";
+import {
+  defineComponent,
+  h,
+  onMounted,
+  onUpdated,
+  reactive,
+  ref,
+  watch,
+} from "vue";
+import { get } from "../apis";
+import { auditOrder, getOrder } from "../apis/order";
+import { AuditInfo, OrderItem, OrderList } from "../types/types";
 
 const columns = ({ handleAgree, handleReject }: any): any => {
   return [
@@ -54,7 +66,7 @@ const columns = ({ handleAgree, handleReject }: any): any => {
       align: "center",
     },
     {
-      title: "指导价",
+      title: "指导价(万元)",
       key: "price",
       align: "center",
     },
@@ -106,38 +118,9 @@ export default defineComponent({
       pageSize: 10,
     });
 
-    const allInfo: OrderItem[] = [];
-
-    const query = (page: number, pageSize = 10): Promise<any> => {
-      return new Promise((resolve) => {
-        const pagedData = ordersInfo.slice(
-          (page - 1) * pageSize,
-          page * pageSize
-        );
-        const pageCount = Math.ceil(ordersInfo.length / pageSize);
-        resolve({
-          pageCount,
-          data: pagedData,
-        });
-      });
-    };
-
-    const handlePageChange = (currentPage: number): void => {
-      if (!loadingRef.value) {
-        loadingRef.value = true;
-        query(currentPage, paginationReactive.pageSize).then((data: any) => {
-          dataRef.value = data.data;
-          paginationReactive.page = currentPage;
-          paginationReactive.pageCount = data.pageCount;
-          loadingRef.value = false;
-        });
-      }
-    };
-    onMounted(() => {
-      getOrder({
-        page: paginationReactive.page,
-        size: paginationReactive.pageSize,
-      }).then((data: any) => {
+    const getOrderFun = (page: number, size: number): void => {
+      const allInfo: OrderItem[] = [];
+      getOrder({ page, size }).then((data: any) => {
         data.data.list.map((item: any) => {
           const orderItem: any = {};
           orderItem.id = item.id;
@@ -150,21 +133,93 @@ export default defineComponent({
           allInfo.push(orderItem);
         });
         dataRef.value = allInfo;
-        paginationReactive.pageCount = data.pageNum;
+        paginationReactive.page = data.data.pageNum;
+        paginationReactive.pageCount = data.data.pages;
         loadingRef.value = false;
       });
+    };
+
+    const getNewOrderFun = (page: number, size: number): void => {
+      getOrder({ page, size }).then((data: any) => {
+        data.data.list.map((item: any) => {
+          const orderItem: any = {};
+          orderItem.id = item.id;
+          orderItem.brand = item.car.brand;
+          orderItem.model = item.car.model;
+          orderItem.series = item.car.series;
+          orderItem.structure = item.car.structure;
+          orderItem.fuel = item.car.fuel;
+          orderItem.price = item.car.price;
+          activeArr.value.push(orderItem);
+        });
+      });
+    };
+
+    const handlePageChange = (currentPage: number): void => {
+      if (!loadingRef.value) {
+        loadingRef.value = true;
+        getOrderFun(currentPage, paginationReactive.pageSize);
+      }
+    };
+    onMounted(() => {
+      getOrderFun(1, 10);
     });
+    const activeArr = ref<any>([]);
+    const handleAgree = (rowData: any): void => {
+      const auditPyload: AuditInfo = {
+        saleId: rowData.id,
+        publish: "1",
+      };
+      auditOrder(auditPyload).then((res) => {
+        if (res.status === 0) {
+          if (activeArr.value.length === 0) {
+            getNewOrderFun(
+              paginationReactive.page + 1,
+              paginationReactive.pageSize
+            );
+            dataRef.value = dataRef.value.filter(
+              (item: any) => item.id !== auditPyload.saleId
+            );
+          } else {
+            dataRef.value = dataRef.value.filter(
+              (item: any) => item.id !== auditPyload.saleId
+            );
+          }
+          //console.log(newArr);
+          message.info("已通过审核！");
+        }
+      });
+    };
+    const handleReject = (rowData: any): void => {
+      const auditPyload: AuditInfo = {
+        saleId: rowData.id,
+        publish: "0",
+      };
+      auditOrder(auditPyload).then((res) => {
+        if (res.status === 0) {
+          if (activeArr.value.length === 0) {
+            getNewOrderFun(
+              paginationReactive.page + 1,
+              paginationReactive.pageSize
+            );
+            dataRef.value = dataRef.value.filter(
+              (item: any) => item.id !== auditPyload.saleId
+            );
+          } else {
+            dataRef.value = dataRef.value.filter(
+              (item: any) => item.id !== auditPyload.saleId
+            );
+          }
+          message.info("已拒绝上架！");
+        }
+      });
+    };
 
     return {
       data: dataRef,
       columns: columns({
-        handleAgree(rowData: any) {
-          // console.log(rowData.id);
-          message.info("确认上架成功！");
-        },
-        handleReject(rowData: any) {
-          message.info("拒绝上架成功！");
-        },
+        handleAgree,
+        handleReject,
       }),
       loading: loadingRef,
       pagination: paginationReactive,
