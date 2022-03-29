@@ -15,10 +15,10 @@
 <script lang="ts">
 import { h, defineComponent, ref, reactive, onMounted } from "vue";
 import { usersInfo } from "../data/index";
+import { getPeople, deletePeople } from "../apis/people";
+import { PeopleItem, PeopleList } from "../types/types";
 import { NButton, useMessage, DataTableColumns, NDataTable } from "naive-ui";
-type DataTableSortState = {
-  align: "center";
-};
+
 type Song = {
   id: number;
   username: string;
@@ -50,8 +50,8 @@ const createColumns = ({
       align: "center",
     },
     {
-      title: "Phonenum",
-      key: "phonenum",
+      title: "PhoneNum",
+      key: "phoneNum",
       align: "center",
     },
     {
@@ -59,11 +59,11 @@ const createColumns = ({
       key: "email",
       align: "center",
     },
-    {
+    /*     {
       title: "Time",
       key: "time",
       align: "center",
-    },
+    }, */
     {
       title: "Action",
       key: "actions",
@@ -84,17 +84,6 @@ const createColumns = ({
   ];
 };
 
-function query(page: number, pageSize = 10) {
-  return new Promise((resolve) => {
-    const pagedData = usersInfo.slice((page - 1) * pageSize, page * pageSize);
-    const pageCount = Math.ceil(usersInfo.length / pageSize);
-    resolve({
-      pageCount,
-      data: pagedData,
-    });
-  });
-}
-
 export default defineComponent({
   name: "PeopleManage",
   components: {
@@ -110,40 +99,88 @@ export default defineComponent({
       pageCount: 1,
       pageSize: 10,
     });
-
+    const allpeople: PeopleItem[] = [];
     onMounted(() => {
-      query(paginationReactive.page, paginationReactive.pageSize).then(
-        (data: any) => {
-          console.log(data);
-          dataRef.value = data.data;
-          paginationReactive.pageCount = data.pageCount;
-          loadingRef.value = false;
-        }
-      );
+      getPeople({
+        page: paginationReactive.page,
+        size: paginationReactive.pageSize,
+      }).then((data: any) => {
+        data.data.list.map((item: any) => {
+          //console.log(item);
+          const peopleItem: any = {};
+          peopleItem.id = item.id;
+          peopleItem.username = item.username;
+          peopleItem.phoneNum = item.phoneNum;
+          peopleItem.email = item.email;
+          peopleItem.gender = item.gender == false ? "女" : "男";
+          allpeople.push(peopleItem);
+        });
+        dataRef.value = allpeople;
+        paginationReactive.pageCount = data.data.pages;
+        loadingRef.value = false;
+      });
     });
+
+    /*     function query(page: number, pageSize = 10) {
+      return new Promise((resolve) => {
+        const pagedData = usersInfo.slice(
+          (page - 1) * pageSize,
+          page * pageSize
+        );
+        const pageCount = Math.ceil(usersInfo.length / pageSize);
+        resolve({
+          pageCount,
+          data: pagedData,
+        });
+      });
+    } */
 
     function handlePageChange(currentPage) {
       if (!loadingRef.value) {
         loadingRef.value = true;
-        query(currentPage, paginationReactive.pageSize).then((data: any) => {
-          dataRef.value = data.data;
+        getPeople({
+          page: currentPage,
+          size: paginationReactive.pageSize,
+        }).then((data) => {
+          console.log(data.data.list);
+          //console.log(data);
+          dataRef.value = data.data.list;
           paginationReactive.page = currentPage;
-          paginationReactive.pageCount = data.pageCount;
+          paginationReactive.pageCount = data.data.pages;
           loadingRef.value = false;
         });
       }
     }
 
     function rowKey(rowData) {
-      return rowData.columns;
+      return rowData.id;
     }
-
     return {
       data: dataRef,
       rowKey,
       columns: columnsRef.value({
-        Delete(row: Song) {
-          message.info(`Delete ${row.id}`);
+        Delete(rowData: Song) {
+          const data = rowData.id;
+          deletePeople(data).then((res) => {
+            if (res.status === 0) {
+              //window.location.reload();
+
+              //console.log(dataRef.value.length);
+              /* for (let i = 0; i < dataRef.value.length; i++) {
+                if ((dataRef.value[i].id = data)) {
+                  dataRef.value[i] = null;
+                }
+              } */
+
+              const newArr = dataRef.value.filter((item) => item.id != data);
+              //console.log(newArr);
+              dataRef.value = newArr;
+              //console.log(dataRef.value);
+              message.info(`删除成功`);
+            } else if (res.status === 1) {
+              message.error(`删除失败`);
+            }
+          });
         },
       }),
       pagination: paginationReactive,

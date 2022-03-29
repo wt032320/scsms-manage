@@ -59,6 +59,7 @@ module.exports = {
     // 强制尽可能地使用点号
     "dot-notation": "warn",
     endOfLine: "auto",
+    //"endOfLine": "auto",
     // 要求使用 === 和 !==
     eqeqeq: "warn",
     // 禁止 if 语句中 return 语句之后有 else 块

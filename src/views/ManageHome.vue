@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="sss">
     <n-layout class="layout" position="absolute">
       <n-layout-header class="layout-header" bordered :inverted="inverted">
         <div class="header-title">二手车后台管理平台</div>
