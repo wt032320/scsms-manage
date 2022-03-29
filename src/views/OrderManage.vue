@@ -7,7 +7,7 @@
     striped
     :single-line="false"
     size="large"
-    min-height="80vh"
+    min-height="75vh"
     :flex-height="true"
     :bordered="true"
     :loading="loading"
