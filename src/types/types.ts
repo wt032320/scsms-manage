@@ -18,9 +18,22 @@ interface OrderItem {
   price: number;
 }
 
+interface PeopleList {
+  page?: number;
+  size?: number;
+}
+
+interface PeopleItem {
+  id: number;
+  username: string;
+  phoneNum: string;
+  email: string;
+  gender: string;
+}
+
 interface AuditInfo {
   saleId: string;
   publish: string;
 }
 
-export { LoginInfo, OrderList, OrderItem, AuditInfo };
+export { LoginInfo, OrderList, OrderItem, PeopleList, PeopleItem, AuditInfo };

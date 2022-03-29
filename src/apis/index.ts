@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useMessage } from "naive-ui";
 
 const baseURL = "http://192.168.1.107:8080";
 
@@ -30,5 +29,10 @@ export const post = async (
   data: Record<string | number, any>
 ): Promise<any> => {
   const resData: any = await api.post(`${baseURL}${url}`, data);
+  return resData.data || true;
+};
+export const Delete = async (url: string, data: number): Promise<any> => {
+  const resData: any = await api.get(`${baseURL}${url}?uid=${data}`);
+  console.log(resData.data);
   return resData.data || true;
 };
