@@ -18,4 +18,9 @@ interface OrderItem {
   price: number;
 }
 
-export { LoginInfo, OrderList, OrderItem };
+interface AuditInfo {
+  saleId: string;
+  publish: string;
+}
+
+export { LoginInfo, OrderList, OrderItem, AuditInfo };

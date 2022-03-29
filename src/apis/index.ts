@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useMessage } from "naive-ui";
 
-const baseURL = "http://192.168.1.106:8080";
+const baseURL = "http://192.168.1.107:8080";
 
 const api = axios.create({
   baseURL,
